@@ -1,0 +1,182 @@
+using Newtonsoft.Json;
+using Oxide.Core.Plugins;
+using Oxide.Ext.Discord;
+using Oxide.Ext.Discord.Attributes;
+using Oxide.Ext.Discord.Builders;
+using Oxide.Ext.Discord.Constants;
+using Oxide.Ext.Discord.Entities.Gatway;
+using Oxide.Ext.Discord.Entities.Gatway.Events;
+using Oxide.Ext.Discord.Entities.Messages;
+using Oxide.Ext.Discord.Entities.Messages.Embeds;
+using System;
+using System.Linq;
+
+namespace Oxide.Plugins
+{
+    [Info("TeamFinder", "Farkas", "1.0")]
+    [Description("Lists the teammates of a player on discord command.")]
+    class TeamFinder : RustPlugin
+    {
+        [DiscordClient]
+        private DiscordClient client;
+
+        private ConfigData configData;
+        class ConfigData
+        {
+            [JsonProperty(PropertyName = "Bot Token")]
+            public string token = "";
+            [JsonProperty(PropertyName = "Channel ID")]
+            public string channelid = "";
+        }
+
+        private bool LoadConfigVariables()
+        {
+            try
+            {
+                configData = Config.ReadObject<ConfigData>();
+            }
+            catch
+            {
+                return false;
+            }
+            SaveConfig(configData);
+            return true;
+        }
+
+        void Init()
+        {
+            if (!LoadConfigVariables())
+            {
+                Puts("Config file issue detected. Please delete file, or check syntax and fix.");
+                return;
+            }
+        }
+
+        protected override void LoadDefaultConfig()
+        {
+            Puts("Creating new config file.");
+            configData = new ConfigData();
+            SaveConfig(configData);
+        }
+
+        void SaveConfig(ConfigData config)
+        {
+            Config.WriteObject(config, true);
+        }
+
+        [HookMethod(DiscordExtHooks.OnDiscordClientCreated)]
+        private void OnDiscordClientCreated()
+        {
+            if (string.IsNullOrEmpty(configData.token))
+            {
+                PrintError("Please set the discord bot token (in the config file) and reload the plugin to continue.");
+                return;
+            }
+            if (string.IsNullOrEmpty(configData.channelid))
+            {
+                PrintError("Please set the channel id (in the config file) and reload the plugin to continue.");
+                return;
+            }
+            DiscordSettings discordSettings = new DiscordSettings();
+            discordSettings.ApiToken = configData.token;
+            discordSettings.Intents = GatewayIntents.GuildMessages;
+            client.Connect(discordSettings);
+
+        }
+
+        [HookMethod(DiscordExtHooks.OnDiscordGatewayReady)]
+        private void OnDiscordGatewayReady(GatewayReadyEvent ready)
+        {
+            if (ready.Guilds.Count == 0)
+            {
+                PrintError("Please invite the bot into your discord server and reload the plugin.");
+                client.Disconnect();
+                return;
+            }
+
+            Puts("Your discord bot connected succesfully.");
+        }
+
+        [GuildCommand("team", false)]
+        void teamCommand(DiscordMessage message, string cmd, string[] args)
+        {
+            if (message.ChannelId != configData.channelid)
+            {
+                sendreply(message, "Not allowed.", "You are not allowed to use this command here.", "#FF0000");
+                return;
+            }
+
+            ulong steamid;
+            try
+            {
+                steamid = ulong.Parse(args[0]);
+            }
+            catch (Exception)
+            {
+                sendreply(message, "Invalid command.", "Please use !team <steamid>", "#FF8C00");
+                return;
+                throw;
+            }
+
+            if (args[0].Length != 17)
+            {
+                sendreply(message, "Invalid command.", "Please use !team <steamid>", "#FF8C00");
+                return;
+            }
+
+            if (args.Length > 1)
+            {
+                sendreply(message, "Invalid command.", "Please use !team <steamid>", "#FF8C00");
+                return;
+            }
+
+            BasePlayer basePlayer = covalence.Players.FindPlayer(steamid.ToString())?.Object as BasePlayer;
+
+            if (!basePlayer)
+            {
+                sendreply(message, "Player not found.", "", "#FF8C00");
+                return;
+            }
+
+            RelationshipManager.PlayerTeam Team = basePlayer.Team;
+            if (Team == null)
+            {
+                sendreply(message, "The player is not in a team.", "", "#FF8C00");
+                return;
+            }
+
+            string[] TeamMembersID = string.Join(",", Team.members.Select(teamMember => teamMember.ToString())).Split(',');
+            string[] TeamMembers = string.Join(",", Team.members.Select(teamMember => covalence.Players.FindPlayerById(teamMember.ToString()).Name)).Split(',');
+
+            string description = string.Empty;
+
+            for (int i = 0; i < TeamMembersID.Length; i++)
+            {
+                if (Team.teamLeader.ToString() == TeamMembersID[i].ToString())
+                {
+                    description += $"{Environment.NewLine}[{TeamMembers[i]}](https://steamcommunity.com/profiles/{TeamMembersID[i]}) :crown:{Environment.NewLine}";
+                }
+                else
+                {
+                    description += $"{Environment.NewLine}[{TeamMembers[i]}](https://steamcommunity.com/profiles/{TeamMembersID[i]}){Environment.NewLine}";
+                }
+            }
+
+            sendreply(message, $"{ConVar.Server.hostname} | The team you were looking for has been found.", description, "#FFFFFF");
+        }
+
+        private void sendreply(DiscordMessage message, string title, string content, string color)
+        {
+            message.Reply(client, CreateEmbed(title, content, color));
+        }
+
+        private DiscordEmbed CreateEmbed(string title, string message, string color)
+        {
+            return new DiscordEmbedBuilder()
+                   .AddTitle(title)
+                   .AddDescription(message)
+                   .AddColor(color)
+                   .Build();
+        }
+    }
+}
