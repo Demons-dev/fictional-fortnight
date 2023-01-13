@@ -1,0 +1,31 @@
+const chalk = require("chalk");
+
+function run() {
+    console.clear();
+    console.log(chalk.bgCyan.bold("--------------------------------------------------------------------------------------------"));
+    console.log        (chalk.white(`\nWelcome to JDP Networks! Please ${chalk.green.bold('read the below')} to get started :)`));
+    console.log        (chalk.white.bold(`\nHow do I get started?\n`));
+    console.log        (chalk.white(`\n- [Step One]: Upload your Discord.js bot files`));
+    console.log        (chalk.white(`     - Pop over to the "File Manager" to upload them!`));
+    console.log        (chalk.white(`\n- [Step Two]: Select the correct startup file`));
+    console.log        (chalk.white(`     - Go to your File Manager and find the file you use to start your bot`));
+    console.log        (chalk.white(`     - Once you have it, copy the name and head over to the "Startup" tab!`));
+    console.log        (chalk.white(`     - Input this file name (including.js) to the "Startup" file section.`));
+    console.log        (chalk.white(`\n- [Step Three]: Start your application.`));
+    console.log        (chalk.green(`     - Thats it! Once done, your bot should be online!\n`));
+    console.log(chalk.bgCyan.bold("--------------------------------------------------------------------------------------------"));
+    
+    console.log (chalk.red.bold(`\n\n\n\n\nImportant Information:`));
+    console.log (chalk.white(`[Support]:`));
+    console.log (chalk.white(`  - Should you need assistance, you can contact us at any time via:`));
+    console.log (chalk.green(`    support@jdpnetworks.com`));
+    console.log(chalk.red(`\n\nIf this is a free Discord.js Hosting plan, clients who are clearly abusing the system with multiple free services on the account could most be suspended. Clients are limited to a total of 1x FREE package per account, and alt-accounts will also be deteceted and banned.`));
+    
+    console.log(chalk.green(`\n\n\nWe hope you enjoy your order!`));
+}
+
+run();
+
+setTimeout(() => {
+    run();
+}, 7200000);
