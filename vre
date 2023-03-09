@@ -1,0 +1,7 @@
+curl --request POST \
+	--url https://discordbotvolodimir-kudriachenkov1.p.rapidapi.com/deleteChannel \
+	--header 'X-RapidAPI-Host: DiscordBotvolodimir-kudriachenkoV1.p.rapidapi.com' \
+	--header 'X-RapidAPI-Key: f9ca764607mshee3ce26e5430596p1b8239jsn45669bf81b0a' \
+	--header 'content-type: application/x-www-form-urlencoded' \
+	--data 'accessToken=<REQUIRED>' \
+	--data 'channelId=<REQUIRED>'
